@@ -14,6 +14,7 @@ namespace hrfh
         public ResultSaver(string filePath)
         {
             _filePath = filePath;
+
         }
 
         public void SaveResult(string figureName, double area, double perimeter)
