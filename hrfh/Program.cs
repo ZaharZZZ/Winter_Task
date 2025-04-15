@@ -30,6 +30,7 @@ namespace hrfh
             while (continueCalculating)
             {
                 // 2. Выбор фигуры пользователем
+                Console.WriteLine("-----------------------------------------------------------------------");
                 Console.WriteLine("Доступные фигуры:");
             for (int i = 0; i < figures.Count; i++)
             {
@@ -39,11 +40,14 @@ namespace hrfh
             int choice;
             while (true)
             {
-                Console.Write("Выберите номер фигуры для расчета: ");
+                    
+                    Console.Write("Выберите номер фигуры для расчета: ");
+
                 if (int.TryParse(Console.ReadLine(), out choice) && choice > 0 && choice <= figures.Count)
                 {
                     break;
                 }
+
                 Console.WriteLine("Неверный ввод. Пожалуйста, введите корректный номер.");
             }
 
@@ -54,7 +58,7 @@ namespace hrfh
             switch (selectedFigure.Name.ToLower())
             {
                 case "круг":
-                    parameters["radius"] = GetDoubleFromUser("Введите радиус круга: ");
+                     parameters["radius"] = GetDoubleFromUser("Введите радиус круга: ");
                     break;
                 case "квадрат":
                     parameters["side"] = GetDoubleFromUser("Введите длину стороны квадрата: ");
