@@ -14,22 +14,39 @@ namespace hrfh
         public ResultSaver(string filePath)
         {
             _filePath = filePath;
-
         }
 
+        // Сохраняет результаты расчетов
         public void SaveResult(string figureName, double area, double perimeter)
         {
             try
             {
-                using (StreamWriter writer = new StreamWriter(_filePath, true)) // Append to the file
+                using (StreamWriter writer = new StreamWriter(_filePath, true))
                 {
-                    writer.WriteLine($"Фигура: {figureName}, Площадь: {area}, Периметр: {perimeter}");
+                    writer.WriteLine($"[{DateTime.Now}] Фигура: {figureName}, Площадь: {area}, Периметр: {perimeter}");
                 }
-                Console.WriteLine($"Результат сохранен в файл: {_filePath}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка при сохранении в файл: {ex.Message}");
+                Console.WriteLine($"Ошибка при сохранении результата: {ex.Message}");
+            }
+        }
+
+        // Сохраняет пользовательскую формулу в файл figures.txt
+        public void SaveCustomFormula(string figureName, bool isAreaFormula, CustomFormula formula, string figuresFilePath)
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter("figures.txt", true))
+                {
+                    string formulaType = isAreaFormula ? "Пользовательская площадь" : "Пользовательский периметр";
+                    string variables = string.Join(",", formula.Variables);
+                    writer.WriteLine($"!{figureName},{formulaType},{formula.Formula},{variables}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при сохранении формулы: {ex.Message}");
             }
         }
     }

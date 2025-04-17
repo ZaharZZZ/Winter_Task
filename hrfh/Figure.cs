@@ -9,19 +9,29 @@ namespace hrfh
     public class Figure
     {
         public string Name { get; set; }
-        public string AreaFormula { get; set; }
-        public string PerimeterFormula { get; set; }
+        public string DefaultAreaFormula { get; set; }  // Стандартная формула
+        public string DefaultPerimeterFormula { get; set; }  // Стандартная формула
+        public CustomFormula CustomAreaFormula { get; set; }  // Пользовательская формула
+        public CustomFormula CustomPerimeterFormula { get; set; }  // Пользовательская формула
 
-        public Figure(string name, string areaFormula, string perimeterFormula)
+        public Figure(string name, string defaultAreaFormula, string defaultPerimeterFormula)
         {
             Name = name;
-            AreaFormula = areaFormula;
-            PerimeterFormula = perimeterFormula;
+            DefaultAreaFormula = defaultAreaFormula;
+            DefaultPerimeterFormula = defaultPerimeterFormula;
         }
 
         public override string ToString()
         {
-            return $"Название: {Name}, Площадь: {AreaFormula}, Периметр: {PerimeterFormula}";
+            string areaInfo = CustomAreaFormula != null
+                ? $"Площадь (пользовательская): {CustomAreaFormula.Formula}"
+                : $"Площадь: {DefaultAreaFormula}";
+
+            string perimeterInfo = CustomPerimeterFormula != null
+                ? $"Периметр (пользовательская): {CustomPerimeterFormula.Formula}"
+                : $"Периметр: {DefaultPerimeterFormula}";
+
+            return $"Название: {Name}, {areaInfo}, {perimeterInfo}";
         }
     }
 }

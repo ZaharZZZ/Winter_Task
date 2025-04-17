@@ -27,24 +27,20 @@ namespace hrfh
                     string line;
                     while ((line = reader.ReadLine()) != null)
                     {
-                        string[] parts = line.Split(','); // Разделяем строку на части по запятой
-                        if (parts.Length == 3)
+                        if (line.StartsWith("!")) // Пользовательская формула
                         {
-                            string name = parts[0].Trim();
-                            string areaFormula = parts[1].Trim();
-                            string perimeterFormula = parts[2].Trim();
-                            figures.Add(new Figure(name, areaFormula, perimeterFormula));
+                            ParseCustomFormula(line, figures);
                         }
-                        else
+                        else // Стандартная фигура
                         {
-                            Console.WriteLine($"Неверный формат строки в файле: {line}");
+                            ParseStandardFigure(line, figures);
                         }
                     }
                 }
             }
             catch (FileNotFoundException)
             {
-                Console.WriteLine($"Файл не найден: {_filePath}");
+                Console.WriteLine($"Файл не найден: {_filePath}. Будет создан новый.");
             }
             catch (Exception ex)
             {
@@ -53,5 +49,41 @@ namespace hrfh
 
             return figures;
         }
+
+        private void ParseStandardFigure(string line, List<Figure> figures)
+        {
+            string[] parts = line.Split(',');
+            if (parts.Length == 3)
+            {
+                string name = parts[0].Trim();
+                string areaFormula = parts[1].Trim();
+                string perimeterFormula = parts[2].Trim();
+                figures.Add(new Figure(name, areaFormula, perimeterFormula));
+            }
+        }
+
+        private void ParseCustomFormula(string line, List<Figure> figures)
+        {
+            // Формат: !Фигура,ТипФормулы,Формула,ПеременныеЧерезЗапятую
+            string[] parts = line.Substring(1).Split(',');
+            if (parts.Length >= 4)
+            {
+                string figureName = parts[0].Trim();
+                string formulaType = parts[1].Trim().ToLower();
+                string formula = parts[2].Trim();
+                List<string> variables = parts[3].Split(',').Select(v => v.Trim()).ToList();
+
+                var figure = figures.FirstOrDefault(f => f.Name.Equals(figureName, StringComparison.OrdinalIgnoreCase));
+                if (figure != null)
+                {
+                    var customFormula = new CustomFormula(formula, variables);
+                    if (formulaType.Contains("площад")) // "Площадь" или "пользовательская площадь"
+                        figure.CustomAreaFormula = customFormula;
+                    else if (formulaType.Contains("периметр")) // "Периметр" или "пользовательский периметр"
+                        figure.CustomPerimeterFormula = customFormula;
+                }
+            }
+        
+    }
     }
 }
