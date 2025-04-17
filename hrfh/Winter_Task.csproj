@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CustomFormula.cs" />
     <Compile Include="Figure.cs" />
     <Compile Include="FigureCalculator.cs" />
     <Compile Include="FigureDataReader.cs" />
