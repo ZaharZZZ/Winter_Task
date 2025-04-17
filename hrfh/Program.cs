@@ -175,6 +175,7 @@ namespace hrfh
             return (areaChoice == 2, perimeterChoice == 4);
         }
 
+
         private static Dictionary<string, double> InputParameters(
             Figure figure,
             bool useCustomArea,
