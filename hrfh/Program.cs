@@ -118,12 +118,11 @@ namespace hrfh
             {
                 figures = new List<Figure>
             {
-                new Figure("Круг", "π * r²", "2 * π * r"),
-                new Figure("Квадрат", "a²", "4 * a"),
+                new Figure("Круг", "Pi * r^2", "2 * Pi * r"),
+                new Figure("Квадрат", "a^2", "4 * a"),
                 new Figure("Прямоугольник", "a * b", "2(a + b)"),
                 new Figure("Треугольник", "(b * h)/2", "a + b + c"),
-                new Figure("Ромб", "(d1 * d2)/2", "4 * a"),
-                new Figure("Трапеция", "(a + b)/2 * h", "a + b + c + d")
+               
             };
                 Console.WriteLine("Загружены стандартные фигуры");
             }
@@ -175,6 +174,7 @@ namespace hrfh
 
             return (areaChoice == 2, perimeterChoice == 4);
         }
+
 
         private static Dictionary<string, double> InputParameters(
             Figure figure,
