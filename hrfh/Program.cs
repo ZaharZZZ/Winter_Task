@@ -141,6 +141,7 @@ namespace hrfh
             return figures;
         }
 
+
         private static void LoadCustomFormulas(List<Figure> figures)
         {
             if (!File.Exists(CustomFormulasFilePath))
