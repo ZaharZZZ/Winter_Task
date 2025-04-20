@@ -12,6 +12,7 @@ namespace hrfh
     {
         private const string figuresFilePath = "figures.txt";
         private const string ResultsFilePath = "results.txt";
+        private const string CustomFormulasFilePath = "custom_formulas.txt";
         static void Main(string[] args)
         {
             Console.WriteLine("=== КАЛЬКУЛЯТОР ГЕОМЕТРИЧЕСКИХ ФИГУР ===");
@@ -21,8 +22,9 @@ namespace hrfh
             var calculator = new FigureCalculator();
             var resultSaver = new ResultSaver(ResultsFilePath);
 
-            // Загрузка фигур
+            // Загрузка фигур и пользовательских формул
             List<Figure> figures = LoadFigures(figureReader);
+            LoadCustomFormulas(figures);
 
             // Основной цикл программы
             while (true)
@@ -32,7 +34,7 @@ namespace hrfh
                     Console.WriteLine("\n=== ГЛАВНОЕ МЕНЮ ===");
                     Console.WriteLine("1. Выполнить расчет");
                     Console.WriteLine("2. Управление формулами");
-                    Console.WriteLine("3. Просмотр истории");
+                    Console.WriteLine("3. Просмотр истории расчетов");
                     Console.WriteLine("4. Выход");
 
                     int choice = GetIntFromUser("Выберите действие: ", 1, 4);
@@ -43,7 +45,7 @@ namespace hrfh
                             CalculateMode(figures, calculator, resultSaver);
                             break;
                         case 2:
-                            FormulasManagementMode(figures, resultSaver);
+                            FormulaManagementMenu(figures);
                             break;
                         case 3:
                             ShowHistory();
@@ -86,29 +88,38 @@ namespace hrfh
             resultSaver.SaveResult(figure.Name, result.Area, result.Perimeter);
         }
 
-        private static void FormulasManagementMode(List<Figure> figures, ResultSaver resultSaver)
+        private static void FormulaManagementMenu(List<Figure> figures)
         {
-            Console.WriteLine("\n=== УПРАВЛЕНИЕ ФОРМУЛАМИ ===");
-            Console.WriteLine("1. Добавить новую формулу");
-            Console.WriteLine("2. Просмотреть все формулы");
-            Console.WriteLine("3. Вернуться");
-
-            int choice = GetIntFromUser("Выберите действие: ", 1, 3);
-
-            switch (choice)
+            while (true)
             {
-                case 1:
-                    AddCustomFormula(figures, resultSaver);
-                    break;
-                case 2:
-                    ShowAllFormulas(figures);
-                    break;
+                Console.WriteLine("\n=== УПРАВЛЕНИЕ ФОРМУЛАМИ ===");
+                Console.WriteLine("1. Добавить новую формулу");
+                Console.WriteLine("2. Просмотреть все формулы");
+                Console.WriteLine("3. Удалить формулу");
+                Console.WriteLine("4. Вернуться в главное меню");
+
+                int choice = GetIntFromUser("Выберите действие: ", 1, 4);
+
+                switch (choice)
+                {
+                    case 1:
+                        AddCustomFormula(figures);
+                        break;
+                    case 2:
+                        ShowAllFormulas(figures);
+                        break;
+                    case 3:
+                        RemoveFormula(figures);
+                        break;
+                    case 4:
+                        return;
+                }
             }
         }
 
         #endregion
 
-        #region Вспомогательные методы
+        #region Работа с фигурами и формулами
 
         private static List<Figure> LoadFigures(FigureDataReader reader)
         {
@@ -122,12 +133,44 @@ namespace hrfh
                 new Figure("Квадрат", "a^2", "4 * a"),
                 new Figure("Прямоугольник", "a * b", "2(a + b)"),
                 new Figure("Треугольник", "(b * h)/2", "a + b + c"),
-               
+                
             };
                 Console.WriteLine("Загружены стандартные фигуры");
             }
 
             return figures;
+        }
+
+        private static void LoadCustomFormulas(List<Figure> figures)
+        {
+            if (!File.Exists(CustomFormulasFilePath))
+                return;
+
+            foreach (string line in File.ReadAllLines(CustomFormulasFilePath))
+            {
+                string[] parts = line.Split('|');
+                if (parts.Length != 5) continue;
+
+                string figureName = parts[0];
+                string formulaType = parts[1];
+                string formulaName = parts[2];
+                string formula = parts[3];
+                List<string> variables = parts[4].Split(',').Select(v => v.Trim()).ToList();
+
+                var figure = figures.FirstOrDefault(f => f.Name.Equals(figureName, StringComparison.OrdinalIgnoreCase));
+                if (figure == null) continue;
+
+                var customFormula = new CustomFormula(formula, variables) { Name = formulaName };
+
+                if (formulaType.Equals("Площадь", StringComparison.OrdinalIgnoreCase))
+                {
+                    figure.CustomAreaFormula = customFormula;
+                }
+                else if (formulaType.Equals("Периметр", StringComparison.OrdinalIgnoreCase))
+                {
+                    figure.CustomPerimeterFormula = customFormula;
+                }
+            }
         }
 
         private static Figure SelectFigure(List<Figure> figures)
@@ -150,7 +193,7 @@ namespace hrfh
             bool hasCustomArea = figure.CustomAreaFormula != null;
             if (hasCustomArea)
             {
-                Console.WriteLine($"2. Пользовательская: {figure.CustomAreaFormula.Formula}");
+                Console.WriteLine($"2. Пользовательская ({figure.CustomAreaFormula.Name}): {figure.CustomAreaFormula.Formula}");
             }
 
             Console.WriteLine("\nДоступные формулы периметра:");
@@ -159,7 +202,7 @@ namespace hrfh
             bool hasCustomPerimeter = figure.CustomPerimeterFormula != null;
             if (hasCustomPerimeter)
             {
-                Console.WriteLine($"4. Пользовательская: {figure.CustomPerimeterFormula.Formula}");
+                Console.WriteLine($"4. Пользовательская ({figure.CustomPerimeterFormula.Name}): {figure.CustomPerimeterFormula.Formula}");
             }
 
             int areaChoice = GetIntFromUser(
@@ -174,7 +217,6 @@ namespace hrfh
 
             return (areaChoice == 2, perimeterChoice == 4);
         }
-
 
         private static Dictionary<string, double> InputParameters(
             Figure figure,
@@ -222,8 +264,7 @@ namespace hrfh
                 case "квадрат":
                     return new[] { "side" };
                 case "прямоугольник":
-                    return forArea ? new[] { "width", "height" }
-                                   : new[] { "width", "height" };
+                    return new[] { "width", "height" };
                 case "треугольник":
                     return forArea ? new[] { "base", "height" }
                                    : new[] { "a", "b", "c" };
@@ -269,25 +310,39 @@ namespace hrfh
             Console.WriteLine($"Результат: {result.Perimeter}");
         }
 
-        private static void AddCustomFormula(List<Figure> figures, ResultSaver resultSaver)
+        #endregion
+
+        #region Управление пользовательскими формулами
+
+        private static void AddCustomFormula(List<Figure> figures)
         {
+            Console.WriteLine("\n=== ДОБАВЛЕНИЕ НОВОЙ ФОРМУЛЫ ===");
+
+            // Выбор фигуры
             Figure figure = SelectFigure(figures);
 
+            // Выбор типа формулы
             Console.WriteLine("\nВыберите тип формулы:");
             Console.WriteLine("1. Формула площади");
             Console.WriteLine("2. Формула периметра");
             int typeChoice = GetIntFromUser("Ваш выбор: ", 1, 2);
 
-            Console.Write("\nВведите формулу (например: 'a * b + c'): ");
+            // Ввод данных формулы
+            Console.Write("\nВведите название формулы: ");
+            string formulaName = Console.ReadLine();
+
+            Console.Write("Введите саму формулу (например: 'a * b + c'): ");
             string formula = Console.ReadLine();
 
             Console.Write("Введите параметры через запятую (например: 'a,b,c'): ");
             var variables = Console.ReadLine()
                 .Split(',')
                 .Select(v => v.Trim())
+                .Where(v => !string.IsNullOrEmpty(v))
                 .ToList();
 
-            var customFormula = new CustomFormula(formula, variables);
+            // Создание и сохранение формулы
+            var customFormula = new CustomFormula(formula, variables) { Name = formulaName };
 
             if (typeChoice == 1)
             {
@@ -298,37 +353,135 @@ namespace hrfh
                 figure.CustomPerimeterFormula = customFormula;
             }
 
-            // Сохраняем в файл
-            resultSaver.SaveCustomFormula(
-                figure.Name,
-                typeChoice == 1,
-                customFormula,
-                figuresFilePath);
+            // Сохранение в файл
+            SaveCustomFormulaToFile(figure, typeChoice == 1, customFormula);
 
             Console.WriteLine("\nФормула успешно добавлена!");
         }
 
         private static void ShowAllFormulas(List<Figure> figures)
         {
-            Console.WriteLine("\n=== ВСЕ ФОРМУЛЫ ===");
+            Console.WriteLine("\n=== ВСЕ ДОСТУПНЫЕ ФОРМУЛЫ ===");
+
             foreach (var figure in figures)
             {
                 Console.WriteLine($"\nФигура: {figure.Name}");
-                Console.WriteLine($"Площадь: {figure.DefaultAreaFormula}");
+
                 if (figure.CustomAreaFormula != null)
                 {
-                    Console.WriteLine($"Пользовательская площадь: {figure.CustomAreaFormula.Formula}");
-                    Console.WriteLine($"Параметры: {string.Join(", ", figure.CustomAreaFormula.Variables)}");
+                    Console.WriteLine($"  Площадь ({figure.CustomAreaFormula.Name}): {figure.CustomAreaFormula.Formula}");
+                    Console.WriteLine($"    Параметры: {string.Join(", ", figure.CustomAreaFormula.Variables)}");
                 }
 
-                Console.WriteLine($"\nПериметр: {figure.DefaultPerimeterFormula}");
                 if (figure.CustomPerimeterFormula != null)
                 {
-                    Console.WriteLine($"Пользовательский периметр: {figure.CustomPerimeterFormula.Formula}");
-                    Console.WriteLine($"Параметры: {string.Join(", ", figure.CustomPerimeterFormula.Variables)}");
+                    Console.WriteLine($"  Периметр ({figure.CustomPerimeterFormula.Name}): {figure.CustomPerimeterFormula.Formula}");
+                    Console.WriteLine($"    Параметры: {string.Join(", ", figure.CustomPerimeterFormula.Variables)}");
                 }
             }
         }
+
+        private static void RemoveFormula(List<Figure> figures)
+        {
+            Console.WriteLine("\n=== УДАЛЕНИЕ ФОРМУЛЫ ===");
+
+            // Выбор фигуры
+            Figure figure = SelectFigure(figures);
+
+            // Получаем список всех формул для выбранной фигуры
+            var formulas = new List<(string type, string name, CustomFormula formula)>();
+
+            if (figure.CustomAreaFormula != null)
+            {
+                formulas.Add(("площади", figure.CustomAreaFormula.Name, figure.CustomAreaFormula));
+            }
+
+            if (figure.CustomPerimeterFormula != null)
+            {
+                formulas.Add(("периметра", figure.CustomPerimeterFormula.Name, figure.CustomPerimeterFormula));
+            }
+
+            if (formulas.Count == 0)
+            {
+                Console.WriteLine("Для выбранной фигуры нет пользовательских формул.");
+                return;
+            }
+
+            // Вывод списка формул
+            Console.WriteLine("\nДоступные формулы для удаления:");
+            for (int i = 0; i < formulas.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. Формула {formulas[i].type} ({formulas[i].name}): {formulas[i].formula.Formula}");
+            }
+
+            // Выбор формулы для удаления
+            int choice = GetIntFromUser("Выберите формулу для удаления: ", 1, formulas.Count);
+            var selectedFormula = formulas[choice - 1];
+
+            // Удаление формулы
+            if (selectedFormula.type == "площади")
+            {
+                figure.CustomAreaFormula = null;
+            }
+            else
+            {
+                figure.CustomPerimeterFormula = null;
+            }
+
+            // Обновление файла с формулами
+            UpdateCustomFormulasFile(figures);
+
+            Console.WriteLine("\nФормула успешно удалена!");
+        }
+
+        private static void SaveCustomFormulaToFile(Figure figure, bool isAreaFormula, CustomFormula formula)
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter(CustomFormulasFilePath, true))
+                {
+                    string formulaType = isAreaFormula ? "Площадь" : "Периметр";
+                    string variables = string.Join(",", formula.Variables);
+                    writer.WriteLine($"{figure.Name}|{formulaType}|{formula.Name}|{formula.Formula}|{variables}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при сохранении формулы: {ex.Message}");
+            }
+        }
+
+        private static void UpdateCustomFormulasFile(List<Figure> figures)
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter(CustomFormulasFilePath, false))
+                {
+                    foreach (var figure in figures)
+                    {
+                        if (figure.CustomAreaFormula != null)
+                        {
+                            string variables = string.Join(",", figure.CustomAreaFormula.Variables);
+                            writer.WriteLine($"{figure.Name}|Площадь|{figure.CustomAreaFormula.Name}|{figure.CustomAreaFormula.Formula}|{variables}");
+                        }
+
+                        if (figure.CustomPerimeterFormula != null)
+                        {
+                            string variables = string.Join(",", figure.CustomPerimeterFormula.Variables);
+                            writer.WriteLine($"{figure.Name}|Периметр|{figure.CustomPerimeterFormula.Name}|{figure.CustomPerimeterFormula.Formula}|{variables}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при обновлении файла формул: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region История расчетов
 
         private static void ShowHistory()
         {
@@ -347,7 +500,7 @@ namespace hrfh
 
         #endregion
 
-        #region Вспомогательные методы ввода
+        #region Вспомогательные методы
 
         private static int GetIntFromUser(string prompt, int min, int max)
         {
@@ -393,5 +546,4 @@ namespace hrfh
 
         #endregion
     }
-
-}
+    }

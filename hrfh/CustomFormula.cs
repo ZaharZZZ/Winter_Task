@@ -8,8 +8,9 @@ namespace hrfh
 {
     public class CustomFormula
     {
-        public string Formula { get; set; }  // Например, "a * b + c"
-        public List<string> Variables { get; set; } = new List<string>();  // Список переменных (a, b, c...)
+        public string Name { get; set; }  // Название формулы
+        public string Formula { get; set; }  // Сама формула
+        public List<string> Variables { get; set; } = new List<string>();  // Список переменных
 
         public CustomFormula(string formula, List<string> variables)
         {

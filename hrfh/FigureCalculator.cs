@@ -9,9 +9,9 @@ namespace hrfh
 {
     public class FigureCalculator
     {
-        /// <summary>
-        /// Вычисляет площадь фигуры с возможностью выбора между стандартной и пользовательской формулой
-        /// </summary>
+        
+        // Вычисляет площадь фигуры с возможностью выбора между стандартной и пользовательской формулой
+  
         public double CalculateArea(Figure figure, Dictionary<string, double> parameters, bool useCustomFormula)
         {
             try
